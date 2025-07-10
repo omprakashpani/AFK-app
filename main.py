@@ -1,12 +1,13 @@
 from pynput import mouse, keyboard
 import pyautogui
 import time
-import keyboard as kb  
+import keyboard as kb
 
 action = []
 rec = True
 last_time = 0
 mouse_record_inter = 0.01
+SCROLL_MULTIPLIER = 100  
 
 def rec_mc(x, y, button, pressed):
     global action
@@ -20,6 +21,11 @@ def rec_mm(x, y):
     if n - last_time >= mouse_record_inter:
         action.append(('mouse_move', x, y, n))
         last_time = n
+
+def rec_scroll(x, y, dx, dy):
+    times = time.time()
+    print(f"📜 Scroll recorded at ({x},{y}) dx={dx}, dy={dy}")
+    action.append(('mouse_scroll', x, y, dx, dy, times))
 
 def record_key(key):
     global action, rec
@@ -39,20 +45,20 @@ def startrec():
     global rec, action
     action.clear()
     rec = True
-    print("Recording started, Press 'Esc' to stop")
+    print("Recording started. Press 'Esc' to stop.")
 
-    with mouse.Listener(on_click=rec_mc, on_move=rec_mm) as ml, \
+    with mouse.Listener(on_click=rec_mc, on_move=rec_mm, on_scroll=rec_scroll) as ml, \
          keyboard.Listener(on_press=record_key) as kl:
         kl.join()
         ml.stop()
 
 def replay(repeat=1):
     if len(action) < 2:
-        print("No actions recorded")
+        print("No actions recorded.")
         return
 
-    speed_f = 70000.0 
-    print(f"\n▶Replaying {repeat} time(s), Press Ctrl+C to stop")
+    speed_f = 70000.0
+    print(f"\nReplaying {repeat} time(s). Press Ctrl+C to stop.")
 
     for r in range(int(repeat) if repeat != float('inf') else 999999999):
         base_t = action[0][-1]
@@ -74,11 +80,15 @@ def replay(repeat=1):
             elif act == 'mouse_up':
                 _, x, y, butt, _ = curr
                 pyautogui.mouseUp(x, y, button=butt)
+            elif act == 'mouse_scroll':
+                _, x, y, dx, dy, _ = curr
+                pyautogui.moveTo(x, y, duration=0)
+                pyautogui.scroll(dy * SCROLL_MULTIPLIER)
             elif act == 'key_press':
                 _, key, _ = curr
                 try:
                     if key.lower() == 'caps_lock':
-                        kb.send('caps lock')  # Actual toggle
+                        kb.send('caps lock')
                         print("CapsLock toggled.")
                     elif key.lower() in pyautogui.KEYBOARD_KEYS:
                         pyautogui.press(key.lower())
@@ -92,7 +102,7 @@ def replay(repeat=1):
 
 def main():
     print("AFK Recorder")
-    input("▶Press Enter to start recording...")
+    input("Press Enter to start recording...")
 
     startrec()
 
@@ -108,7 +118,7 @@ def main():
     except ValueError:
         repeat = 1
 
-    print("\nReplaying in 3 seconds...")
+    print("\n⏳ Replaying in 3 seconds...")
     time.sleep(3)
 
     replay(repeat)
