@@ -79,7 +79,7 @@ def replay(repeat=1):
                 try:
                     if key.lower() == 'caps_lock':
                         kb.send('caps lock')  # Actual toggle
-                        print("🔁 CapsLock toggled.")
+                        print("CapsLock toggled.")
                     elif key.lower() in pyautogui.KEYBOARD_KEYS:
                         pyautogui.press(key.lower())
                     else:
@@ -103,7 +103,7 @@ def main():
     print(f"\nRecorded {len(action)} actions.")
 
     try:
-        repeat_input = input("🔁 Enter number of replays (or 'inf' for infinite): ").strip()
+        repeat_input = input("Enter number of replays (or 'inf' for infinite): ").strip()
         repeat = float('inf') if repeat_input.lower() == 'inf' else int(repeat_input)
     except ValueError:
         repeat = 1
